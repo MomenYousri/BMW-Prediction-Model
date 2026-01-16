@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMW Configurator | AI Prediction</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* --- تنسيقات الهوية البصرية لـ BMW (الوضع الليلي الفاخر) --- */
+        :root {
+            --bmw-blue: #1c69d4;
+            --bmw-black: #000000;
+            --bmw-dark: #121212;
+            --bmw-text: #ffffff;
+            --bmw-gray: #8e8e8e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bmw-black);
+            color: var(--bmw-text);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden; /* لمنع التمرير للصفحة بالكامل */
+        }
+
+        .main-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* --- القسم الأيمن: عرض السيارة --- */
+        .visual-section {
+            flex: 1.6;
+            position: relative;
+            background-color: #050505;
+            overflow: hidden;
+        }
+
+        .car-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            filter: brightness(0.8);
+            /* صورة افتراضية */
+            background-image: url('\static\images\default.jpg');
+        }
+
+        .visual-overlay {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, #000 10%, transparent 100%);
+            padding: 60px;
+            z-index: 2;
+        }
+
+        .brand-tag {
+            color: var(--bmw-blue);
+            font-size: 0.8rem;
+            letter-spacing: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .model-name {
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1;
+        }
+
+        /* --- القسم الأيسر: لوحة التحكم --- */
+        .control-section {
+            flex: 1;
+            background-color: var(--bmw-dark);
+            padding: 50px;
+            border-left: 1px solid #222;
+            overflow-y: auto; /* السماح بالتمرير داخل اللوحة */
+            box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+        }
+
+        /* تخصيص السكرول بار */
+        .control-section::-webkit-scrollbar { width: 5px; }
+        .control-section::-webkit-scrollbar-thumb { background: var(--bmw-blue); }
+
+        .form-header {
+            margin-bottom: 40px;
+            border-right: 4px solid var(--bmw-blue);
+            padding-right: 15px;
+        }
+        
+        .form-header h2 {
+            font-weight: 300;
+            font-size: 1.5rem;
+            margin: 0;
+            color: #fff;
+        }
+
+        .form-label {
+            color: var(--bmw-gray);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        /* حقول الإدخال بتصميم عصري */
+        .form-select, .form-control {
+            background-color: rgba(255,255,255,0.05) !important;
+            border: 1px solid #333;
+            border-radius: 0;
+            color: #fff !important;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+
+        .form-select:focus, .form-control:focus {
+            box-shadow: none;
+            border-color: var(--bmw-blue);
+            background-color: rgba(255,255,255,0.1) !important;
+        }
+        
+        .form-select option {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .btn-bmw {
+            background-color: var(--bmw-blue);
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 20px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-bmw:hover {
+            background-color: #fff;
+            color: var(--bmw-blue);
+        }
+
+        /* نتيجة التوقع */
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(28, 105, 212, 0.1);
+            border: 1px solid var(--bmw-blue);
+            text-align: center;
+        }
+        
+        .result-box h3 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 2rem;
+        }
+
+        /* للموبايل */
+        @media (max-width: 992px) {
+            .main-wrapper { flex-direction: column; overflow-y: auto; }
+            .visual-section { height: 35vh; flex: none; }
+            .control-section { overflow: visible; padding: 30px; }
+            .model-name { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    
+    <div class="visual-section">
+        <div class="car-bg" id="carBg"></div>
+        <div class="visual-overlay">
+            <span class="brand-tag">Sheer Driving Pleasure</span>
+            <h1 class="model-name" id="modelTitle">BMW Configurator</h1>
+        </div>
+    </div>
+
+    <div class="control-section">
+        <div class="form-header">
+            <h2>تحديد مواصفات السيارة</h2>
+        </div>
+
+        <form method="POST">
+            <div class="row">
+                <div class="col-12">
+                    <label class="form-label">اختار موديل السيارة</label>
+                    <select name="Model" id="modelSelect" class="form-select" required>
+                        <option value="" disabled selected>اختر من القائمة</option>
+                        
+                        <option value="3 Series">Series 3</option>
+                        <option value="5 Series">Series 5</option>
+                        <option value="7 Series">Series 7</option>
+                        
+                        <option value="M3">M3 Performance</option>
+                        <option value="M5">M5 Performance</option>
+                        
+                        <option value="X1">X1 SAV</option>
+                        <option value="X3">X3 SAV</option>
+                        <option value="X5">X5 SAV</option>
+                        <option value="X6">X6 SAC</option>
+                        
+                        <option value="i3">i3 Electric</option>
+                        <option value="i8">i8 Roadster</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">سنة الصنع</label>
+                    <input type="number" name="Year" class="form-control" placeholder="2024" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">حجم المحرك (L)</label>
+                    <input type="number" step="0.1" name="Engine_Size_L" class="form-control" placeholder="3.0" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">المسافة المقطوعة (KM)</label>
+                    <input type="number" name="Mileage_KM" class="form-control" placeholder="0" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">السعر (USD)</label>
+                    <input type="number" name="Price_USD" class="form-control" placeholder="50000" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">المنطقة</label>
+                    <select name="Region" class="form-select" required>
+                        <option value="Middle East">Middle East</option>
+                        <option value="Europe">Europe</option>
+                        <option value="North America">North America</option>
+                        <option value="Asia">Asia</option>
+                        <option value="Africa">Africa</option>
+                        <option value="South America">South America</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">اللون</label>
+                    <select name="Color" class="form-select" required>
+                        <option value="Black">Black</option>
+                        <option value="White">White</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Grey">Grey</option>
+                        <option value="Red">Red</option>
+                        <option value="Silver">Silver</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">نوع الوقود</label>
+                    <select name="Fuel_Type" class="form-select" required>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Electric">Electric</option>
+                        <option value="Hybrid">Hybrid</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">ناقل الحركة</label>
+                    <select name="Transmission" class="form-select" required>
+                        <option value="Automatic">Automatic</option>
+                        <option value="Manual">Manual</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-bmw">تحليل البيانات</button>
+
+            {% if prediction %}
+            <div class="result-box">
+                <span class="brand-tag">نتيجة التصنيف</span>
+                <h3>{{ prediction }}</h3>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+    const modelSelect = document.getElementById('modelSelect');
+    const carBg = document.getElementById('carBg');
+    const modelTitle = document.getElementById('modelTitle');
+
+    // روابط الصور الصحيحة لكل موديل
+   // استبدل روابط الصور بمسارات الملفات المحلية
+    const carImages = {
+        '3 Series': '/static/images/3series.jpg',
+        '5 Series': '/static/images/5series.jpg',
+        '7 Series': '/static/images/7series.jpg',
+        'M3': '/static/images/m3.jpg',
+        'M5': '/static/images/m5.jpg',
+        'X1': '/static/images/x1.jpg',
+        'X3': '/static/images/x3.jpg',
+        'X5': '/static/images/x5.jpg',
+        'X6': '/static/images/x6.jpg',
+        'i3': '/static/images/i3.jpg',
+        'i8': '/static/images/i8.jpg',
+        'default': '/static/images/default.jpg' 
+    };
+
+    modelSelect.addEventListener('change', function(e) {
+        const selectedValue = e.target.value; // القيمة المرسلة للباك إند (مثلاً M3)
+        const selectedText = e.target.options[e.target.selectedIndex].text; // النص الظاهر (مثلاً M3 Performance)
+        
+        const imgUrl = carImages[selectedValue] || carImages['default'];
+        
+        // تأثير تغيير الصورة
+        carBg.style.opacity = 0.4;
+        setTimeout(() => {
+            carBg.style.backgroundImage = `url('${imgUrl}')`;
+            carBg.style.opacity = 1;
+            modelTitle.innerText = "THE " + selectedText;
+        }, 300);
+    });
+</script>
+
+</body>
+</html>
